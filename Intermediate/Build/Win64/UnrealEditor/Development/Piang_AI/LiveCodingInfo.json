@@ -1,0 +1,13 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.Piang_AI.cpp.obj": [
+			"AIPawn.cpp.obj",
+			"Piang_AI.cpp.obj"
+		],
+		"Module.Piang_AI.gen.cpp.obj": [
+			"AIPawn.gen.cpp.obj",
+			"Piang_AI.init.gen.cpp.obj"
+		]
+	}
+}
