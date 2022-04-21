@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "../../../../ZMY_Interaction/Source/ZMY_Interaction/Public/Component/DialogueComponent.h"
 #include "GameFramework/Pawn.h"
 #include "AIPawn.generated.h"
 
@@ -17,6 +18,8 @@ enum class EAIPawnState:uint8
 	EWait UMETA(DisplayName = "等待"),
 	
 	EMove UMETA(DisplayName = "移动并转向"),
+
+	EDelivery UMETA(DisplayName = "传送"),
 	
 	ENull UMETA(DisplayName = "无"),
 };
@@ -52,14 +55,15 @@ private:
 	FTimerHandle TimerHandle_RotatorToActor;
 	//是否始终面向Actor
 	bool bFaceTargetActor = false;
-	AActor *TargetActor = nullptr;
+	
 
 	//移动向Actor
 	FTimerHandle TimerHandle_MoveToActor;
 
-	//
+	UPROPERTY(VisibleAnywhere)
 	FVector FollowLocation = FVector(0,-300,0);
-	
+
+	UPROPERTY(VisibleAnywhere)
 	FVector TalkLocation = FVector(0,300,100);
 public:
 	/**
@@ -67,10 +71,16 @@ public:
 	 */
 
 	//骨骼网格体
+	UPROPERTY(VisibleAnywhere)
 	class USkeletalMeshComponent* Mesh;
 	//移动 Movement
+	UPROPERTY(VisibleAnywhere)
 	class UFloatingPawnMovement* Movement;
-
+	//对话组件
+	UPROPERTY(VisibleAnywhere)
+	class UDialogueComponent* DialogueComponent;
+	
+	
 	//Init All Component
 	virtual void InitComponent();
 
@@ -78,16 +88,37 @@ public:
 	/*
 	 * Operctor
 	 */
+	UPROPERTY(VisibleAnywhere)
+	bool bCanOperctor = true;
+	//转向目标
 	void RotatorToActor();//
-	void RotatorToActor(AActor* TargetActor);//直接旋转到位置
+	UFUNCTION(BlueprintCallable)
 	void RotatorToActor(AActor* TargetActor,float RotatorRate = 0.001);
 
+	//移动向目标
 	void MoveToActor();
+	UFUNCTION(BlueprintCallable)
 	void MoveToActor(AActor* TargetActor,float RotatorRate = 0.001);
-	void MoveToLocation(FVector TargetVector,float RotatorRate = 0.001);
 
-	void ChangeAiPawnState(EAIPawnState TargetState);
+	//等待
+	UFUNCTION(BlueprintCallable)
+	void WaitForPlayer(AActor* TargetActor);
+	
+	UFUNCTION(BlueprintCallable)
+	void ChangeAiPawnState(EAIPawnState TargetState,AActor* MoveActor,AActor* RotatorActor);
 
-	AActor* GetTargetActor();
-	void SetTargetActor(AActor* TargetActor);
+	UFUNCTION(BlueprintCallable)
+	AActor* BP_GetMoveTargetActor();
+	UFUNCTION(BlueprintCallable)
+	void BP_SetMoveTargetActor(AActor* TargetActor);
+
+	UPROPERTY()
+	AActor *MoveTargetActor = nullptr;
+
+	UFUNCTION(BlueprintCallable)
+	AActor* BP_GetRotatorTargetActor();
+	UFUNCTION(BlueprintCallable)
+	void BP_SetRotatorTargetActor(AActor* TargetActor);
+	UPROPERTY()
+	AActor *RotatorTargetActor = nullptr;
 };

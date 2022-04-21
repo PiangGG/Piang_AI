@@ -38,6 +38,8 @@ public class Piang_AI : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"ZMY_Interaction",
+				"AIModule"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

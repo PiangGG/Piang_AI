@@ -3,8 +3,10 @@
 
 #include "AIPawn.h"
 
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 AAIPawn::AAIPawn()
@@ -27,6 +29,13 @@ void AAIPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	/*if (bFaceTargetActor)
+	{
+		if (GetWorld()->GetFirstLocalPlayerFromController()->GetPlayerController(GetWorld())->GetPawn()&&GetWorld()->GetFirstLocalPlayerFromController()&&GetWorld())
+		{
+			RotatorToActor();
+		}
+	}*/
 }
 
 // Called to bind functionality to input
@@ -38,11 +47,12 @@ void AAIPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AAIPawn::InitComponent()
 {
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	//骨骼网格体
 	Mesh=CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
-	//Mesh->SetSkeletalMesh(LoadObject<USkeletalMesh>(NULL,TEXT("")));
-	//Mesh->SetAnimClass(LoadClass<UAnimInstance>(NULL,TEXT("")));
+	Mesh->SetSkeletalMesh(LoadObject<USkeletalMesh>(NULL,TEXT("SkeletalMesh'/Game/GongPan_character/mask/mesh/mask3.mask3'")));
+	Mesh->SetAnimClass(LoadClass<UAnimInstance>(NULL,TEXT("AnimBlueprint'/Game/BP/Piang/MianJuYingDao/Animation/BP_MaskAnimation.BP_MaskAnimation_C'")));
 
 	//MoveMent
 	Movement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("Movement"));
@@ -50,62 +60,68 @@ void AAIPawn::InitComponent()
 
 void AAIPawn::RotatorToActor()
 {
-	if (TargetActor)
+	if (RotatorTargetActor)
 	{
 		FVector StartPoint =  GetActorLocation();
-		FVector EndPoint = TargetActor->GetActorLocation();
+		FVector EndPoint = RotatorTargetActor->GetActorLocation();
 
 		FRotator CurrentRotator = GetActorRotation();
 		FRotator FaceRotator =  UKismetMathLibrary::FindLookAtRotation(StartPoint,EndPoint);
 
 		CurrentRotator = FMath::RInterpConstantTo(CurrentRotator,FaceRotator,GetWorld()->GetDeltaSeconds(),1.0f);
 		SetActorRotation(CurrentRotator);
+
+		if (CurrentRotator.Equals(FaceRotator))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(TimerHandle_RotatorToActor);
+			bCanOperctor = true;
+		}
 	}
 }
 
-void AAIPawn::RotatorToActor(AActor* TargetActor)
+void AAIPawn::RotatorToActor(AActor* Actor,float RotatorRate)
 {
-	FVector StartPoint =  GetActorLocation();
-	FVector EndPoint = TargetActor->GetActorLocation();
-	FRotator FaceRotator =  UKismetMathLibrary::FindLookAtRotation(StartPoint,EndPoint);
-	SetActorRotation(FaceRotator);
-}
-
-void AAIPawn::RotatorToActor(AActor* TargetActor,float RotatorRate)
-{
-	SetTargetActor(TargetActor);
+	
+	if (!bCanOperctor)return;
+	bCanOperctor = false;
+	
+	BP_SetRotatorTargetActor(Actor);
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_RotatorToActor,this,&AAIPawn::RotatorToActor,RotatorRate,true);
 }
 
 void AAIPawn::MoveToActor()
 {
-	if (Movement&&TargetActor)
+	if (bCanOperctor)
 	{
-		if (FVector::Distance(GetTargetActor()->GetActorLocation(),GetActorLocation())<100)
+		if (Movement&&MoveTargetActor)
 		{
-			return;
+			if (FVector::Distance(BP_GetMoveTargetActor()->GetActorLocation(),GetActorLocation())<100)
+			{
+				return;
+			}
+			//Movement->AddInputVector(FRotator(0.0f,GetActorRotation().Yaw,0.0f).Vector(),false);
+			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), MoveTargetActor->GetActorLocation());
 		}
-		Movement->AddInputVector(FRotator(0.0f,GetActorRotation().Yaw,0.0f).Vector(),false);
 	}
 }
 
-void AAIPawn::MoveToActor(AActor* TargetActor,float MoveRate)
+void AAIPawn::MoveToActor(AActor* Actor,float MoveRate)
 {
-	SetTargetActor(TargetActor);
+	BP_SetMoveTargetActor(Actor);
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle_MoveToActor,this,&AAIPawn::MoveToActor,MoveRate,true);
 }
 
-void AAIPawn::MoveToLocation(FVector TargetVector, float RotatorRate)
+void AAIPawn::WaitForPlayer(AActor* TargetActor)
 {
 	
 }
 
-void AAIPawn::ChangeAiPawnState(EAIPawnState TargetState)
+void AAIPawn::ChangeAiPawnState(EAIPawnState TargetState,AActor* MoveActor,AActor* RotatorActor)
 {
 	switch (TargetState)
 	{
 		case EAIPawnState::EFollow:
-			//MoveToLocation();
+			
 			break;
 		case EAIPawnState::ETalk:
 			
@@ -120,16 +136,27 @@ void AAIPawn::ChangeAiPawnState(EAIPawnState TargetState)
 		case EAIPawnState::ENull:
 
 			break;
-	default: ;
+	default:
+		break;
 	}
 }
 
-AActor* AAIPawn::GetTargetActor()
+AActor* AAIPawn::BP_GetMoveTargetActor()
 {
-	return TargetActor;
+	return MoveTargetActor;
 }
 
-void AAIPawn::SetTargetActor(AActor* TargetActor)
+void AAIPawn::BP_SetMoveTargetActor(AActor* TargetActor)
 {
-	this->TargetActor = TargetActor;
+	MoveTargetActor = TargetActor;
+}
+
+AActor* AAIPawn::BP_GetRotatorTargetActor()
+{
+	return RotatorTargetActor;
+}
+
+void AAIPawn::BP_SetRotatorTargetActor(AActor* TargetActor)
+{
+	RotatorTargetActor = TargetActor;
 }
