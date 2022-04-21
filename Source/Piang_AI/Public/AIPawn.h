@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "../../../../ZMY_Interaction/Source/ZMY_Interaction/Public/Component/DialogueComponent.h"
+//#include "../../../../ZMY_Interaction/Source/ZMY_Interaction/Public/Component/DialogueComponent.h"
 #include "GameFramework/Pawn.h"
 #include "AIPawn.generated.h"
 
@@ -24,6 +24,8 @@ enum class EAIPawnState:uint8
 	ENull UMETA(DisplayName = "无"),
 };
 
+DECLARE_DELEGATE_OneParam(bCompleteDelegate,AActor*);
+DECLARE_DELEGATE_OneParam(bFaceActorDelegate,bool);
 UCLASS()
 class PIANG_AI_API AAIPawn : public APawn
 {
@@ -55,8 +57,10 @@ private:
 	FTimerHandle TimerHandle_RotatorToActor;
 	//是否始终面向Actor
 	bool bFaceTargetActor = false;
-	
+	//始终面向TargetActor
+	bFaceActorDelegate bFaceActor;
 
+	
 	//移动向Actor
 	FTimerHandle TimerHandle_MoveToActor;
 
@@ -65,6 +69,11 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	FVector TalkLocation = FVector(0,300,100);
+
+	//完成的委托
+	bCompleteDelegate bComplete_Move;
+	
+	bCompleteDelegate bComplete_Rotator;
 public:
 	/**
 	 * All Component
@@ -77,8 +86,8 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	class UFloatingPawnMovement* Movement;
 	//对话组件
-	UPROPERTY(VisibleAnywhere)
-	class UDialogueComponent* DialogueComponent;
+	// UPROPERTY(VisibleAnywhere)
+	// class UDialogueComponent* DialogueComponent;
 	
 	
 	//Init All Component
@@ -93,16 +102,35 @@ public:
 	//转向目标
 	void RotatorToActor();//
 	UFUNCTION(BlueprintCallable)
-	void RotatorToActor(AActor* TargetActor,float RotatorRate = 0.001);
-
+	void RotatorToActor(AActor* TargetActor);
+	UPROPERTY(VisibleAnywhere)
+	float RotatorRate = 0.001;
+	
 	//移动向目标
 	void MoveToActor();
 	UFUNCTION(BlueprintCallable)
-	void MoveToActor(AActor* TargetActor,float RotatorRate = 0.001);
+	void MoveToActor(AActor* TargetActor);
+	UPROPERTY(VisibleAnywhere)
+	float MoveRate = 0.001;
 
+	//交谈
+	UFUNCTION(BlueprintCallable)
+	void Talk(AActor* TargetActor);
+	
+	UFUNCTION(BlueprintCallable)
+	void Follow(AActor* TargetActor);
+	
 	//等待
 	UFUNCTION(BlueprintCallable)
 	void WaitForPlayer(AActor* TargetActor);
+
+	//传送到目标
+	UFUNCTION(BlueprintCallable)
+	void Delivery(AActor* TargetActor);
+
+	UFUNCTION(BlueprintCallable)
+	void NullState();
+
 	
 	UFUNCTION(BlueprintCallable)
 	void ChangeAiPawnState(EAIPawnState TargetState,AActor* MoveActor,AActor* RotatorActor);
@@ -121,4 +149,10 @@ public:
 	void BP_SetRotatorTargetActor(AActor* TargetActor);
 	UPROPERTY()
 	AActor *RotatorTargetActor = nullptr;
+
+	//设置是否始终面向Actor
+	UFUNCTION(BlueprintCallable)
+	void SetbFaceActor(bool bFace);
 };
+
+
