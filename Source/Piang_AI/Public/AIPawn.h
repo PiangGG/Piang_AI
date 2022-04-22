@@ -59,7 +59,6 @@ private:
 	bool bFaceTargetActor = false;
 	//始终面向TargetActor
 	bFaceActorDelegate bFaceActor;
-
 	
 	//移动向Actor
 	FTimerHandle TimerHandle_MoveToActor;
@@ -82,13 +81,24 @@ public:
 	//骨骼网格体
 	UPROPERTY(VisibleAnywhere)
 	class USkeletalMeshComponent* Mesh;
+	UMaterialInstanceDynamic* M_Mesh;
+	
+	UPROPERTY(VisibleAnywhere)
+	class USkeletalMeshComponent* Mesh2;
+	UMaterialInstanceDynamic* M_Mesh2;
+	
 	//移动 Movement
 	UPROPERTY(VisibleAnywhere)
 	class UFloatingPawnMovement* Movement;
 	//对话组件
 	// UPROPERTY(VisibleAnywhere)
 	// class UDialogueComponent* DialogueComponent;
+
+	UPROPERTY(VisibleAnywhere)
+	class USceneComponent* DeclLocation;
 	
+	UPROPERTY(VisibleAnywhere)
+	class UDecalComponent* DecalComp;
 	
 	//Init All Component
 	virtual void InitComponent();
@@ -104,17 +114,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RotatorToActor(AActor* TargetActor);
 	UPROPERTY(VisibleAnywhere)
-	float RotatorRate = 0.001;
+	float RotatorRate = 0.001f;
 	
 	//移动向目标
 	void MoveToActor();
 	UFUNCTION(BlueprintCallable)
 	void MoveToActor(AActor* TargetActor);
 	UPROPERTY(VisibleAnywhere)
-	float MoveRate = 0.001;
+	float MoveRate = 1.0f;
 
 	//交谈
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable,BlueprintNativeEvent)
 	void Talk(AActor* TargetActor);
 	
 	UFUNCTION(BlueprintCallable)
@@ -133,7 +143,7 @@ public:
 
 	
 	UFUNCTION(BlueprintCallable)
-	void ChangeAiPawnState(EAIPawnState TargetState,AActor* MoveActor,AActor* RotatorActor);
+	void ChangeAIPawnState(EAIPawnState TargetState,AActor* MoveActor,AActor* RotatorActor);
 
 	UFUNCTION(BlueprintCallable)
 	AActor* BP_GetMoveTargetActor();
@@ -147,12 +157,48 @@ public:
 	AActor* BP_GetRotatorTargetActor();
 	UFUNCTION(BlueprintCallable)
 	void BP_SetRotatorTargetActor(AActor* TargetActor);
+
+	UFUNCTION(BlueprintCallable)
+	void BP_SetRotatorTargetActorisPlayer(AActor* TargetActor);
+	
 	UPROPERTY()
 	AActor *RotatorTargetActor = nullptr;
 
 	//设置是否始终面向Actor
 	UFUNCTION(BlueprintCallable)
 	void SetbFaceActor(bool bFace);
+
+	//显示
+	UFUNCTION()
+	void Show();
+
+	UPROPERTY()
+	class UMaterialParameterCollection* MaterialParameterCollection;
+	
+	UFUNCTION()
+	void ShowTick();
+	UPROPERTY(VisibleAnywhere)
+	float ShowHight = -800;
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
+	float StartShow = -40.0f;
+	float EndShow = -80.0f;
+	UPROPERTY(VisibleAnywhere,Category=Show)
+	float ShowRate = 1;
+	UPROPERTY(VisibleAnywhere,Category=Show)
+	FTimerHandle TimerHandle_Show;
+
+
+
+	/*
+	 * TipLight
+	 */
+	void TipLight();
+	void TipLightTick();
+	UPROPERTY(VisibleAnywhere,Category=TipLight)
+	FTimerHandle TimerHandle_TipLight;
+	UPROPERTY(VisibleAnywhere,BlueprintReadWrite)
+	bool bTipLight = true;
 };
+
 
 
